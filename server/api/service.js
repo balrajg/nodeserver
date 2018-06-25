@@ -67,13 +67,17 @@ app.post('/uploadResultData', function (req, res) {
 					.then(function () {
 					  
 					 customLibrary.processUploadedResults(new_path+'tmp/'+newFileName+'/'+file_name, res, req)
-					  
+				
 					 
 					})
 					.catch(function (err) {
 					  console.log(err);
 					});
 					
+					fs.unlink(old_path, function (err) {
+						console.log("deleted temp file");
+						
+					});
 					/*
 					fs.unlink(old_path, function (err) {
 						if (err) {
