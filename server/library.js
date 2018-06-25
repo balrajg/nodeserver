@@ -58,7 +58,7 @@ function processUploadedResults(dir, res, req) {
 			//INSERT INTO posts SET ?
 			db.doInsert(insertData, 'automationrun', function (last_insert_id) {
 
-				console.log("Called succss callback and last insert_id is ==> +" last_insert_id );
+				console.log("Called succss callback and last insert_id is    dsfsf dsfdsfdsf==> +" last_insert_id );
 			});
 
 		}
