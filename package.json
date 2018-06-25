@@ -1,0 +1,27 @@
+{
+  "name": "youngmugs",
+  "version": "1.0.0",
+  "description": "youngmugs",
+  "main": "server/api/service",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "client": "cd client && npm start",
+    "server": "node server/api/service",
+    "dev": "concurrently --kill-others-on-fail \"npm run server\" \"npm run client\""
+  },
+  "dependencies": {
+    "express": "^4.16.3",
+    "formidable": "^1.2.1",
+    "fs": "0.0.1-security",
+    "http": "0.0.0",
+    "mysql": "^2.15.0",
+    "node-7z": "^0.4.0",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "concurrently": "^3.5.1",
+    "style-loader": "^0.21.0"
+  },
+  "author": "",
+  "license": "ISC"
+}

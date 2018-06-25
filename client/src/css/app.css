@@ -1,0 +1,102 @@
+
+
+
+a {
+  color: #007bff;
+  text-decoration: none;
+  background-color: transparent;
+  -webkit-text-decoration-skip: objects;
+}
+
+
+
+
+.appFooter {
+  background: #EFEFEF;
+  border-top: 1px solid #000;
+}
+
+.fileDropContainer {
+  width: 100%;
+  height: 100px;
+  border: 1px dashed #AAA;
+  border-radius: 5px;
+  padding: 10px;
+}
+
+.dropContainerActive {
+  border: 2px solid green;
+}
+
+.dropRejectedFile {
+  border: 2px solid red;
+}
+
+.navbar-custom .navbar-brand,
+.navbar-custom a {
+  color: #FFF !important;
+}
+
+.navbar-custom a.active {
+  background: #051c48;
+}
+
+.navbar-brand {
+  padding-right: 20px;
+  border-right: 1px solid #FFF;
+}
+
+.uploadResults {
+  margin: 10px 0;
+}
+
+.childTable{border: 1px solid #051c48 !important;}
+.ReactTable .rt-thead .rt-tr{text-align: left !important; font-weight: 600;}
+
+.container-fluid{padding-bottom: 40px}
+/* Tooltip container */
+.customtooltip {
+    position: relative;
+    display: inline-block;
+    /* If you want dots under the hoverable text */
+}
+
+/* Tooltip text */
+.customtooltip .tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+
+    /* Position the tooltip text */
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -60px;
+
+    /* Fade in tooltip */
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+/* Tooltip arrow */
+.customtooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #555 transparent transparent transparent;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.customtooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
