@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactTable from "react-table";
 import 'react-table/react-table.css';
+import SubTable from './subtable';
 class HomePage extends React.Component {
  constructor() {
         super();
@@ -9,7 +10,8 @@ class HomePage extends React.Component {
             data: [],
             subcontent: "",
             loading: false,
-            dataCount: 5
+            dataCount: 5,
+			pages:null
         }
         this.fetchData = this.fetchData.bind(this);
         this.toggleRow = this.toggleRow.bind(this);
@@ -41,13 +43,13 @@ class HomePage extends React.Component {
 
     fetchData(state, instance) {
         this.setState({ loading: true });
-
-        fetch('fetchReports?pageNum=1&recordsperpage=10').then(res => res.json())
+	
+        fetch('fetchReports?pageNum='+state.page+'&recordsperpage='+state.pageSize).then(res => res.json())
             .then((response) => {
                 if (response.success !== undefined && response.success === "true") {
                     var data = response.data;
-
-                    this.setState({ data: data, loading: false, dataCount: data.length })
+                   var pages= Math.ceil(response.total/state.pageSize)
+                    this.setState({ data: data, loading: false, dataCount: data.length, pages: pages })
                 } else {
                     this.setState({ data: [], loading: false, dataCount: 3 })
                     console.log(response.error)
@@ -58,7 +60,7 @@ class HomePage extends React.Component {
     }
 
     render() {
-        const { data, loading, dataCount } = this.state;
+        const { data, loading, dataCount , pages} = this.state;
 
         const columns = [
 
@@ -242,16 +244,17 @@ class HomePage extends React.Component {
                     data={data}
                     columns={columns}
                     defaultPageSize={5}
+					pages={pages} 
                     className="-striped -highlight"
                     loading={loading}
                     onFetchData={this.fetchData}
-                    pageSize={dataCount}
-                    pageSizeOptions= {[10, 20, 25, 50, 100]}
-                    /*SubComponent={row => {
+					manual 
+                    pageSizeOptions= {[5,10, 20, 25, 50, 100]}
+                    SubComponent={row => {
                         return (
                             <SubTable data={row} />
                         )
-                    }}*/
+                    }}
 
                 />
                 <br />

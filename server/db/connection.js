@@ -36,7 +36,7 @@ function doInsert(data, table, cb) {
 
 		});
 		
-		console.log(query.sql);
+	//	console.log(query.sql);
 	}
 
 }

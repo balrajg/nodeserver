@@ -14,7 +14,10 @@ function getCustomValue(abcd) {
 
 }
 
-function processUploadedResults(dir, res, req) {
+function processUploadedResults(dir, jobType, res, req) {
+	var suitRunResponses = 0, suitRunReq=0,
+	tcResponse = 0, tcReq=0, tctReq=0,
+	tctResponse = 0;
 	fs.readdir(dir, function (err, files) {
 		var jsonFile = "";
 		if (err) {
@@ -34,7 +37,7 @@ function processUploadedResults(dir, res, req) {
 			var data = JSON.parse(fs.readFileSync(dir + "/" + jsonFile, 'utf8'));
 			var buildVar = data.matrixBuildVersion;
 			var insertData = {
-				executionType: 1,
+				executionType: jobType,
 				browser: data.browserName,
 				browserVersion: data.browserVersion,
 				mainRelease: buildVar.substring(0, buildVar.indexOf(".", 3)),
@@ -53,8 +56,9 @@ function processUploadedResults(dir, res, req) {
 
 				if (firstErr) {
 					dbInsertFailure(automationId, res, firstErr);
+					return false;
 				}
-				return false;
+
 				var suiteSummaryContextMetaDatas = data.suiteSummaryContextMetaDatas;
 				for (var i = 0, secondLevledata; i < suiteSummaryContextMetaDatas.length; ++i) {
 					var secondLevledata = suiteSummaryContextMetaDatas[i];
@@ -64,12 +68,14 @@ function processUploadedResults(dir, res, req) {
 						startTime: secondLevledata.suiteStartTime,
 						endTime: secondLevledata.suiteEndTime
 					};
+					suitRunReq++;
 					db.doInsert(secondLevelData, 'suiterun', function (suiteRunId, secondErr) {
 
 						if (secondErr) {
 							dbInsertFailure(automationId, res, secondErr);
+
 						}
-						return false;
+						suitRunResponses++;
 
 						fs.readdir(dir + "/" + secondLevledata.suiteName, function (terr, files) {
 							var suiteJsonFile = "";
@@ -95,14 +101,16 @@ function processUploadedResults(dir, res, req) {
 										startTime: suiteJsonData.contextSummaryReportMetaDatas.contextStartTime,
 										endTime: suiteJsonData.contextSummaryReportMetaDatas.contextEndTime
 									};
+									tcReq++
 									db.doInsert(SuiteContextData, "testcontext", function (testContextId, fErr) {
 										if (fErr) {
 
 											dbInsertFailure(automationId, res, fErr);
+											return false;
 
 										}
-										return false;
 
+										tcResponse++;
 										var finalDatalib = suiteJsonData.contextDetailedReportMetaDatas.contextTestDetailedReportMetaDatas;
 										for (var lastdatalib, k = 0; k < finalDatalib.length; ++k) {
 											var lastdatalib = finalDatalib[k];
@@ -119,18 +127,20 @@ function processUploadedResults(dir, res, req) {
 												startTime: lastdatalib.StartMillis,
 												startTime: lastdatalib.endMillis
 											};
+											tctReq++;
 											db.doInsert(testContextDetailData, "testcontexttest", function (lastId, lErr) {
 												if (lErr) {
 
 													dbInsertFailure(automationId, res, lErr);
+													return false;
 
 												}
-												return false;
-
-												if (i + 1 == suiteSummaryContextMetaDatas.length && su + 1 == suiteJsonDatalib.length && k + 1 == finalDatalib.length)
-													fs.unlink(dir, function (err) {
-														response.send({
-															'success': 'true',
+												tctResponse++
+												
+												if (suitRunResponses == suitRunReq && tcResponse == tcReq && tctResponse == tctReq)
+													fs.rmdir(dir, function (err) {
+														res.send({
+															success: 'true',
 															result: "uploaded successfully."
 														});
 													})
@@ -152,14 +162,16 @@ function processUploadedResults(dir, res, req) {
 }
 
 function dbInsertFailure(automationId, response, err) {
-/*DELETE 	automationrun, 	suiterun, testcontext, testcontexttest FROM automationrun 
- INNER JOIN suiterun ON suiterun.automationRunID = automationrun.id
- INNER JOIN testcontext ON testcontext.suiteRunID = suiterun.id
- INNER JOIN testcontexttest ON testcontexttest.testContextID = testcontext.id
- WHERE automationrun.id = automationId
+	/*DELETE 	automationrun, 	suiterun, testcontext, testcontexttest FROM automationrun
+	INNER JOIN suiterun ON suiterun.automationRunID = automationrun.id
+	INNER JOIN testcontext ON testcontext.suiteRunID = suiterun.id
+	INNER JOIN testcontexttest ON testcontexttest.testContextID = testcontext.id
+	WHERE automationrun.id = automationId
 
 
-*/
+	 */
+
+	console.log(err);
 	response.send({
 		success: 'false',
 		result: "Unexpected Error please try again",
