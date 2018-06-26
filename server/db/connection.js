@@ -30,9 +30,8 @@ function doInsert(data, table, cb) {
 		//create insert statement
 		//INSERT INTO posts SET ?
 		var query = con.query("INSERT INTO "+table+" SET ?", data, function (err, result) {
-			if (err)
-				throw err;
-			cb(result.insertId);
+			
+			cb(result.insertId, err);
 			
 
 		});

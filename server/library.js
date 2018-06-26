@@ -18,26 +18,22 @@ function processUploadedResults(dir, res, req) {
 	fs.readdir(dir, function (err, files) {
 		var jsonFile = "";
 		if (err) {
-
-			console.log("error in reading directory");
-			console.log(err);
+			response.send({
+				success: 'false',
+				result: "Unexpected Error please try again",
+				err: err
+			});
 		} else {
-
 			for (var i = 0, file; file = files[i]; ++i) {
 				var ext = file.split(".").pop();
 				if (ext === "json" || ext === "JSON") {
 					jsonFile = file;
 					break;
 				}
-
 			}
-
 			var data = JSON.parse(fs.readFileSync(dir + "/" + jsonFile, 'utf8'));
-
 			var buildVar = data.matrixBuildVersion;
-
 			var insertData = {
-
 				executionType: 1,
 				browser: data.browserName,
 				browserVersion: data.browserVersion,
@@ -51,16 +47,14 @@ function processUploadedResults(dir, res, req) {
 				startTime: data.startTimeOfSuites,
 				endTime: data.endTimeOfSuites,
 				product: data.productName,
-				platform: data.platform,
-
+				platform: data.platform
 			};
+			db.doInsert(insertData, 'automationrun', function (automationId, firstErr) {
 
-			//INSERT INTO posts SET ?
-			db.doInsert(insertData, 'automationrun', function (automationId) {
-
-				console.log("Called succss callback and last insert_id is    dsfsf dsfdsfdsf==> " + automationId);
-				// insert into second table
-
+				if (firstErr) {
+					dbInsertFailure(automationId, res, firstErr);
+				}
+				return false;
 				var suiteSummaryContextMetaDatas = data.suiteSummaryContextMetaDatas;
 				for (var i = 0, secondLevledata; i < suiteSummaryContextMetaDatas.length; ++i) {
 					var secondLevledata = suiteSummaryContextMetaDatas[i];
@@ -68,19 +62,22 @@ function processUploadedResults(dir, res, req) {
 						automationRunID: automationId,
 						suiteName: secondLevledata.suiteName,
 						startTime: secondLevledata.suiteStartTime,
-						endTime: secondLevledata.suiteEndTime,
+						endTime: secondLevledata.suiteEndTime
+					};
+					db.doInsert(secondLevelData, 'suiterun', function (suiteRunId, secondErr) {
 
-					}
-					db.doInsert(secondLevelData, 'suiterun', function (suiteRunId) {
+						if (secondErr) {
+							dbInsertFailure(automationId, res, secondErr);
+						}
+						return false;
 
-						fs.readdir(dir + "/" + secondLevledata.suiteName, function (err, files) {
+						fs.readdir(dir + "/" + secondLevledata.suiteName, function (terr, files) {
 							var suiteJsonFile = "";
-							if (err) {
+							if (terr) {
 
-								console.log("error in reading directory");
-								console.log(err);
+								dbInsertFailure(automationId, res, terr);
+								return false;
 							} else {
-
 								for (var j = 0, file; j < files.length; ++j) {
 									var file = files[j];
 									var ext = file.split(".").pop();
@@ -88,25 +85,25 @@ function processUploadedResults(dir, res, req) {
 										suiteJsonFile = file;
 										break;
 									}
-
 								}
-								var suiteJsonData = JSON.parse(fs.readFileSync(dir + "/" + secondLevledata.suiteName + "/" + suiteJsonFile, 'utf8')).suiteContextMetaData[0];
+								var suiteJsonDatalib = JSON.parse(fs.readFileSync(dir + "/" + secondLevledata.suiteName + "/" + suiteJsonFile, 'utf8')).suiteContextMetaData;
+								for (var su = 0; su < suiteJsonDatalib.length; su++) {
+									var suiteJsonData = suiteJsonDatalib[su];
+									var SuiteContextData = {
+										suiteRunID: suiteRunId,
+										testContextName: suiteJsonData.contextSummaryReportMetaDatas.contextName,
+										startTime: suiteJsonData.contextSummaryReportMetaDatas.contextStartTime,
+										endTime: suiteJsonData.contextSummaryReportMetaDatas.contextEndTime
+									};
+									db.doInsert(SuiteContextData, "testcontext", function (testContextId, fErr) {
+										if (fErr) {
 
-								
-								console.log(suiteJsonData);
-								
-								var SuiteContextData = {
-									suiteRunID: suiteRunId,
-									testContextName: suiteJsonData[contextSummaryReportMetaDatas].contextName,
-									startTime: suiteJsonData[contextSummaryReportMetaDatas].contextStartTime,
-									endTime: suiteJsonData[contextSummaryReportMetaDatas].contextEndTime
-								}
+											dbInsertFailure(automationId, res, fErr);
 
-								
-								db.doInsert(SuiteContextData, testcontext, function (testContextId) {
-									
-									var finalDatalib = suiteJsonData[contextDetailedReportMetaDatas].contextTestDetailedReportMetaDatas;
-									console.log(finalDatalib[0]);
+										}
+										return false;
+
+										var finalDatalib = suiteJsonData.contextDetailedReportMetaDatas.contextTestDetailedReportMetaDatas;
 										for (var lastdatalib, k = 0; k < finalDatalib.length; ++k) {
 											var lastdatalib = finalDatalib[k];
 											var testContextDetailData = {
@@ -121,31 +118,52 @@ function processUploadedResults(dir, res, req) {
 												exceptionMessage: lastdatalib.throwableErrorMessage != undefined ? lastdatalib.throwableErrorMessage : null,
 												startTime: lastdatalib.StartMillis,
 												startTime: lastdatalib.endMillis
+											};
+											db.doInsert(testContextDetailData, "testcontexttest", function (lastId, lErr) {
+												if (lErr) {
 
-											}
-											db.doInsert(testContextDetailData, testcontexttest, function (lastId) {
+													dbInsertFailure(automationId, res, lErr);
 
-												console.log("hurray.... Everything got success");
-												fs.unlink(dir, function (err) {
-													console.log("deleted extracted file");
-												})
+												}
+												return false;
+
+												if (i + 1 == suiteSummaryContextMetaDatas.length && su + 1 == suiteJsonDatalib.length && k + 1 == finalDatalib.length)
+													fs.unlink(dir, function (err) {
+														response.send({
+															'success': 'true',
+															result: "uploaded successfully."
+														});
+													})
 
 											});
 
 										}
 
-								})
+									})
 
+								}
 							}
 						});
-
 					})
-
 				}
-
 			});
-
 		}
+	});
+}
+
+function dbInsertFailure(automationId, response, err) {
+/*DELETE 	automationrun, 	suiterun, testcontext, testcontexttest FROM automationrun 
+ INNER JOIN suiterun ON suiterun.automationRunID = automationrun.id
+ INNER JOIN testcontext ON testcontext.suiteRunID = suiterun.id
+ INNER JOIN testcontexttest ON testcontexttest.testContextID = testcontext.id
+ WHERE automationrun.id = automationId
+
+
+*/
+	response.send({
+		success: 'false',
+		result: "Unexpected Error please try again",
+		err: err
 	});
 }
 
